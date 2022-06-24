@@ -1,6 +1,7 @@
 import 'package:app_crud_auth_local/common/text_form_field.dart';
 import 'package:app_crud_auth_local/ui/login_page.dart';
 import 'package:flutter/material.dart';
+import '../common/helper.dart';
 import '../database/database_helper.dart';
 import '../model/user.dart';
 
@@ -12,7 +13,7 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  final _formKey = new GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>();
 
   final _controllerUserId = TextEditingController();
   final _controllerUserName = TextEditingController();
@@ -36,22 +37,18 @@ class _RegisterPageState extends State<RegisterPage> {
 
     if (_formKey.currentState!.validate()) {
       if (password != confirmPassword) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text("Password No Match")));
+        alertDialog(context, const Text("Password No Match"));
       } else {
-        _formKey.currentState?.save();
+        _formKey.currentState!.save();
 
         User user = User(uid, username, email, password);
         await dbHelper.saveData(user).then((userData) {
-          ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Successfully Saved")));
-
+          alertDialog(context, const Text("Successfully Saved"));
           Navigator.push(
-              context, MaterialPageRoute(builder: (_) => LoginPage()));
+              context, MaterialPageRoute(builder: (_) => const LoginPage()));
         }).catchError((error) {
           print(error);
-          ScaffoldMessenger.of(context)
-              .showSnackBar(const SnackBar(content: Text("Error: Login Fail")));
+          alertDialog(context, const Text("Error: Login Fail"));
         });
       }
     }
@@ -133,7 +130,8 @@ class _RegisterPageState extends State<RegisterPage> {
                       onPressed: () {
                         Navigator.pushAndRemoveUntil(
                             context,
-                            MaterialPageRoute(builder: (_) => LoginPage()),
+                            MaterialPageRoute(
+                                builder: (_) => const LoginPage()),
                             (Route<dynamic> route) => false);
                       },
                     )

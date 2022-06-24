@@ -9,69 +9,70 @@ import 'dart:io' as io;
 class DbHelper {
   static Database? _db;
 
-  static const String dbUser = "user.db";
-  static const String tblUser = "user";
-  static const int versionDb = 1;
+  static const String DB_Name = 'test.db';
+  static const String Table_User = 'user';
+  static const int Version = 1;
 
-  static const String userID = "userId";
-  static const String userName = "userName";
-  static const String email = "email";
-  static const String password = "password";
+  static const String C_UserID = 'user_id';
+  static const String C_UserName = 'user_name';
+  static const String C_Email = 'email';
+  static const String C_Password = 'password';
 
   Future<Database?> get db async {
     if (_db != null) {
       return _db;
     }
-    _db = await iniDb();
+    _db = await initDb();
     return _db;
   }
 
-  iniDb() async {
-    io.Directory documentDirectory = await getApplicationDocumentsDirectory();
-    String path = join(documentDirectory.path, dbUser);
-    var db = await openDatabase(path, version: versionDb, onCreate: _onCreate);
+  initDb() async {
+    io.Directory documentsDirectory = await getApplicationDocumentsDirectory();
+    String path = join(documentsDirectory.path, DB_Name);
+    var db = await openDatabase(path, version: Version, onCreate: _onCreate);
+    return db;
   }
 
-  _onCreate(Database db, int inVersion) async {
-    await db.execute("CREATE TABLE $tblUser ("
-        " $userID TEXT, "
-        " $userName TEXT, "
-        " $email TEXT,"
-        " $password TEXT, "
-        " PRIMARY KEY ($userID)"
+  _onCreate(Database db, int intVersion) async {
+    await db.execute("CREATE TABLE $Table_User ("
+        " $C_UserID TEXT, "
+        " $C_UserName TEXT, "
+        " $C_Email TEXT,"
+        " $C_Password TEXT, "
+        " PRIMARY KEY ($C_UserID)"
         ")");
   }
 
-  Future<int?> saveData(User user) async {
+  Future<int> saveData(User user) async {
     var dbClient = await db;
-    var res = await dbClient?.insert(tblUser, user.toMap());
+    var res = await dbClient!.insert(Table_User, user.toMap());
     return res;
   }
 
-  Future<User?> getLogin(String userId, String password) async {
+  Future<User?> getLoginUser(String userId, String password) async {
     var dbClient = await db;
-    var res = await dbClient?.rawQuery("SELECT * FROM $tblUser WHERE "
-        "$userID = '$userId' AND "
-        "$password = '$password'");
+    var res = await dbClient!.rawQuery("SELECT * FROM $Table_User WHERE "
+        "$C_UserID = '$userId' AND "
+        "$C_Password = '$password'");
 
-    if (res!.isNotEmpty) {
+    if (res.length > 0) {
       return User.fromMap(res.first);
     }
+
     return null;
   }
 
-  Future<int?> updateUser(User user) async {
+  Future<int> updateUser(User user) async {
     var dbClient = await db;
-    var result = await dbClient?.update(tblUser, user.toMap(),
-        where: "$userID = ?", whereArgs: [user.userId]
-    );
-    return result;
+    var res = await dbClient!.update(Table_User, user.toMap(),
+        where: '$C_UserID = ?', whereArgs: [user.user_id]);
+    return res;
   }
 
-  Future<int?> deleteUser(String userId) async {
+  Future<int> deleteUser(String user_id) async {
     var dbClient = await db;
-    var result = await dbClient?.delete(
-        tblUser, whereArgs: [userId], where: "$userID = ?");
-    return result;
+    var res = await dbClient
+        !.delete(Table_User, where: '$C_UserID = ?', whereArgs: [user_id]);
+    return res;
   }
 }

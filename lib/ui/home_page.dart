@@ -1,7 +1,7 @@
 import 'package:app_crud_auth_local/ui/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import '../common/helper.dart';
 import '../common/text_form_field.dart';
 import '../database/database_helper.dart';
 import '../model/user.dart';
@@ -17,88 +17,90 @@ class _HomePageState extends State<HomePage> {
   final _formKey = GlobalKey<FormState>();
   final Future<SharedPreferences> _pref = SharedPreferences.getInstance();
 
-  DbHelper? dbHelper;
-  final _controllerDeleteUserId = TextEditingController();
-  final _controllerUserId = TextEditingController();
-  final _controllerUserName = TextEditingController();
-  final _controllerEmail = TextEditingController();
-  final _controllerPassword = TextEditingController();
+  late DbHelper dbHelper;
+  final _conUserId = TextEditingController();
+  final _conDelUserId = TextEditingController();
+  final _conUserName = TextEditingController();
+  final _conEmail = TextEditingController();
+  final _conPassword = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    getUserData();
+
     dbHelper = DbHelper();
   }
 
-  Future<void> getUser() async{
-    final SharedPreferences sharedPreferences = await _pref;
-    setState(() {
-      _controllerDeleteUserId.text = sharedPreferences.getString("userId") ?? "";
-      _controllerUserId.text = sharedPreferences.getString("userId") ?? "";
-      _controllerUserName.text = sharedPreferences.getString("userName") ?? "";
-      _controllerEmail.text = sharedPreferences.getString("email") ?? "";
-      _controllerPassword.text = sharedPreferences.getString("password") ?? "";
+  Future<void> getUserData() async {
+    final SharedPreferences sp = await _pref;
 
+    setState(() {
+      _conUserId.text = sp.getString("user_id")!;
+      _conDelUserId.text = sp.getString("user_id")!;
+      _conUserName.text = sp.getString("user_name")!;
+      _conEmail.text = sp.getString("email")!;
+      _conPassword.text = sp.getString("password")!;
     });
   }
+
   update() async {
-    String uid = _controllerUserId.text;
-    String username = _controllerUserName.text;
-    String email = _controllerEmail.text;
-    String password = _controllerPassword.text;
+    String uid = _conUserId.text;
+    String uname = _conUserName.text;
+    String email = _conEmail.text;
+    String passwd = _conPassword.text;
 
     if (_formKey.currentState!.validate()) {
-      _formKey.currentState?.save();
+      _formKey.currentState!.save();
 
-      User user = User(uid, username, email, password);
-      await dbHelper?.updateUser(user).then((value) {
+      User user = User(uid, uname, email, passwd);
+      await dbHelper.updateUser(user).then((value) {
         if (value == 1) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Successfully Updated")));
-
-          updateSharedPref(user, true).whenComplete(() {
+          alertDialog(context, const Text("Successful Update"));
+          updateSP(user, true).whenComplete(() {
             Navigator.pushAndRemoveUntil(
                 context,
-                MaterialPageRoute(builder: (_) => LoginPage()),
+                MaterialPageRoute(builder: (_) => const LoginPage()),
                     (Route<dynamic> route) => false);
           });
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Error Update")));
-
+          alertDialog(context, const Text("Error Update"));
         }
       }).catchError((error) {
         print(error);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Error")));
+        alertDialog(context, const Text("Error"));
       });
     }
   }
 
   delete() async {
-    String delUserID = _controllerUserId.text;
+    String delUserID = _conDelUserId.text;
 
-    await dbHelper?.deleteUser(delUserID).then((value) {
+    await dbHelper.deleteUser(delUserID).then((value) {
       if (value == 1) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Successfully Deleted")));
-        updateSharedPref(null, false).whenComplete(() {
+        alertDialog(context, const Text("Successful Delete"));
+        updateSP(null, false).whenComplete(() {
           Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (_) => const LoginPage()), (Route<dynamic> route) => false);
+              MaterialPageRoute(builder: (_) => const LoginPage()),
+                  (Route<dynamic> route) => false);
         });
       }
     });
   }
 
-  Future updateSharedPref(User? user, bool add) async {
-    final SharedPreferences sharedPreferences = await _pref;
+  Future updateSP(User? user, bool add) async {
+    final SharedPreferences sp = await _pref;
 
     if (add) {
-      sharedPreferences.setString("userName", user?.userName ?? "");
-      sharedPreferences.setString("email", user?.email ?? "");
-      sharedPreferences.setString("password", user?.password ?? "");
+      sp.setString("user_name", user!.user_name!);
+      sp.setString("email", user.email!);
+      sp.setString("password", user.password!);
     } else {
-      sharedPreferences.remove('userId');
-      sharedPreferences.remove('userName');
-      sharedPreferences.remove('email');
-      sharedPreferences.remove('password');
+      sp.remove('user_id');
+      sp.remove('user_name');
+      sp.remove('email');
+      sp.remove('password');
     }
   }
 
@@ -120,25 +122,25 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   //Update
                   TextFormEdit(
-                      controller: _controllerUserId,
+                      controller: _conUserId,
                       isEnable: false,
                       icon: Icons.person,
                       hintName: 'User ID'),
                   const SizedBox(height: 10.0),
                   TextFormEdit(
-                      controller: _controllerUserName,
+                      controller: _conUserName,
                       icon: Icons.person_outline,
                       inputType: TextInputType.name,
                       hintName: 'User Name'),
                   const SizedBox(height: 10.0),
                   TextFormEdit(
-                      controller: _controllerEmail,
+                      controller: _conEmail,
                       icon: Icons.email,
                       inputType: TextInputType.emailAddress,
                       hintName: 'Email'),
                   const SizedBox(height: 10.0),
                   TextFormEdit(
-                    controller: _controllerPassword,
+                    controller: _conPassword,
                     icon: Icons.lock,
                     hintName: 'Password',
                     isObscureText: true,
@@ -157,7 +159,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   //Delete
                   TextFormEdit(
-                      controller: _controllerDeleteUserId,
+                      controller: _conDelUserId,
                       isEnable: false,
                       icon: Icons.person,
                       hintName: 'User ID'),

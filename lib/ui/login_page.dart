@@ -1,3 +1,4 @@
+import 'package:app_crud_auth_local/common/helper.dart';
 import 'package:app_crud_auth_local/common/text_form_field.dart';
 import 'package:app_crud_auth_local/database/database_helper.dart';
 import 'package:flutter/material.dart';
@@ -81,8 +82,10 @@ class _LoginPageState extends State<LoginPage> {
                   ElevatedButton(
                     child: const Text('Signup'),
                     onPressed: () {
-                      Navigator.push(context,
-                          MaterialPageRoute(builder: (_) => RegisterPage()));
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const RegisterPage()));
                     },
                   )
                 ],
@@ -99,37 +102,34 @@ class _LoginPageState extends State<LoginPage> {
     String passwd = _controllerPassword.text;
 
     if (uid.isEmpty) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text("Please Enter User ID")));
+      alertDialog(context, const Text("Please Enter User ID"));
     } else if (passwd.isEmpty) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text("Please Enter Password")));
+      alertDialog(context, const Text("Please Enter Password"));
     } else {
-      await dbHelper.getLogin(uid, passwd).then((userData) {
+      await dbHelper.getLoginUser(uid, passwd).then((userData) {
         if (userData != null) {
           sharedPref(userData).whenComplete(() {
             Navigator.pushAndRemoveUntil(
                 context,
-                MaterialPageRoute(builder: (_) => HomePage()),
+                MaterialPageRoute(builder: (_) => const HomePage()),
                 (Route<dynamic> route) => false);
           });
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Error: User Not Found")));
+          alertDialog(context, const Text("Error: User Not Found"));
         }
       }).catchError((error) {
         print(error);
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text("Error: Login Fail")));
+        alertDialog(context, const Text("Error: Login Fail"));
       });
     }
   }
 
   Future sharedPref(User user) async {
-    final SharedPreferences sharedPreferences = await _pref;
-    sharedPreferences.setString("userId", user.userId ?? "");
-    sharedPreferences.setString("userName", user.userName ?? "");
-    sharedPreferences.setString("email", user.email ?? "");
-    sharedPreferences.setString("password", user.password ?? "");
+    final SharedPreferences sp = await _pref;
+
+    sp.setString("user_id", user.user_id!);
+    sp.setString("user_name", user.user_name!);
+    sp.setString("email", user.email!);
+    sp.setString("password", user.password!);
   }
 }
